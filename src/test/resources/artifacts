@@ -1,0 +1,10 @@
+org.keycloak:keycloak-server-spi:2.4.0.Final
+io.undertow.jastow:jastow:2.0.0.Final
+org.keycloak:saml-servlet-filter:2.4.0.Final
+org.keycloak:keycloak-saml-core:2.4.0.Final
+org.keycloak:keycloak-examples-cors-parent:2.4.0.Final
+org.apache.santuario:xmlsec:2.0.5
+org.picketlink:picketlink-wildfly-common:2.7.0.Final
+org.keycloak:keycloak-wildfly-server-subsystem:2.4.0.Final
+org.apache.httpcomponents:httpclient:4.5
+org.osgi:org.osgi.core:4.2.0
