@@ -29,6 +29,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -40,14 +41,21 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 public class MetadataRetrievalTest
 
 {
-    private static final String INDY_URL = "http://indy-admin-stage.psi.redhat.com/api/content/maven/group/DA/";
+    private static final String INDY_URL =
+                    "http://indy-admin-stage.psi.redhat.com/api/content/maven/group/DA-temporary-builds";
 
-    @Ignore
     @Test
     public void test() throws Exception
     {
-        Set<String> artifacts = null;
-        try (InputStream in = getClass().getClassLoader().getResourceAsStream( "artifacts" ))
+        String indyUrl = System.getProperty( "indyUrl", INDY_URL ); // -DindyUrl
+        System.out.println( "Use indyUrl: " + indyUrl );
+
+        String artifactsFile =
+                        System.getProperty( "artifactsFile", "artifacts" ); // e.g., -DartifactsFile=artifacts-all
+        System.out.println( "Use artifactsFile: " + artifactsFile );
+
+        Set<String> artifacts;
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream( artifactsFile ))
         {
             String[] lines = IOUtil.toString( in ).split( "\n" );
             artifacts = new HashSet<>( Arrays.asList( lines ) );
@@ -55,19 +63,27 @@ public class MetadataRetrievalTest
         catch ( IOException e )
         {
             e.printStackTrace();
+            return;
         }
+
+        Set<String> metadataPaths =
+                        artifacts.stream().map( artifact -> getMetadataPath( artifact ) ).collect( Collectors.toSet() );
 
         CloseableHttpClient client = HttpClients.createDefault();
 
+        long begin = System.currentTimeMillis();
+        System.out.println( "Starts: " + new Date( begin ) );
         Set<CompletableFuture<String>> futures = new HashSet<>();
-        artifacts.forEach( artifact -> {
-            CompletableFuture<String> f = supplyAsync( () -> getMetadataPath( artifact ) ).thenApplyAsync(
-                            path -> getMetadata( path, client ) );
-            futures.add( f );
-        } );
+        metadataPaths.forEach( path -> futures.add( supplyAsync( () -> getMetadata( path, client ) ) ) );
+
         List<String> list = futures.stream().map( f -> f.join() ).collect( Collectors.toList() );
 
+        long end = System.currentTimeMillis();
+        System.out.println( "\nResult:" );
         list.forEach( s -> System.out.println( s ) );
+        System.out.println( "\nEnds: " + new Date( end ) );
+        System.out.println( "\nElapse(s): " + ( end - begin ) / 1000 );
+
     }
 
     private String entityToString( CloseableHttpResponse response ) throws IOException
@@ -82,24 +98,25 @@ public class MetadataRetrievalTest
 
     private String getMetadata( String path, CloseableHttpClient client )
     {
-        HttpGet request = new HttpGet( INDY_URL + path );
+        String ret;
+        HttpGet request = new HttpGet( INDY_URL + "/" + path );
         try
         {
             CloseableHttpResponse response = client.execute( request );
             StatusLine sl = response.getStatusLine();
-            if ( sl.getStatusCode() != 200 )
+            if ( sl.getStatusCode() == 200 )
             {
-                return sl.toString();
+                String content = entityToString( response );
+                System.out.println( "Got metadata: " + path );
             }
-            String content = entityToString( response );
-            //logger.debug( "Got metadata: {}", content );
-            return content;
+            ret = sl.toString();
         }
         catch ( final IOException e )
         {
             e.printStackTrace();
+            ret = e.getMessage();
         }
-        return null;
+        return path + " => " + ret;
     }
 
     /**
