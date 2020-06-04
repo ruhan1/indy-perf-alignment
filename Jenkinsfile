@@ -1,4 +1,3 @@
-def userInput = []
 def indyUrl = ''
 def artifactsFile = ''
 
@@ -13,13 +12,11 @@ pipeline {
         stage('Enter Parameters'){
             steps {
                 script {
-                    userInput = input(
-                        id: 'userInput', message: "Please enter a test suite to run:",
-                        parameters:[
-                            string(name: 'indyUrl', defaultValue: 'http://indy-master-devel.psi.redhat.com/api/content/maven/group/DA-temporary-builds', description: 'Indy group URL to test'),
-                            string(name: 'artifactsFile', defaultValue: 'artifacts', description: 'artifacts (trial) or artifacts-all (281 files)'),
-                        ]
-                    )
+                    def userInput = input message: "Please enter a test suite to run:",
+                    parameters:[
+                        string(name: 'indyUrl', defaultValue: 'http://indy-master-devel.psi.redhat.com/api/content/maven/group/DA-temporary-builds', description: 'Indy group URL to test'),
+                        string(name: 'artifactsFile', defaultValue: 'artifacts', description: 'artifacts (trial) or artifacts-all (281 files)')
+                    ]
                     indyUrl = userInput.indyUrl
                     artifactsFile = userInput.artifactsFile
                 }
