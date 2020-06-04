@@ -1,3 +1,4 @@
+def userInput = []
 def indyUrl = ''
 def artifactsFile = ''
 
