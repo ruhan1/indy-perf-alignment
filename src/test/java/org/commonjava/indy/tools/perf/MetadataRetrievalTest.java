@@ -33,6 +33,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static java.lang.Integer.min;
@@ -91,7 +92,9 @@ public class MetadataRetrievalTest
 
     private HttpClient getHttpClient()
     {
-        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout( 30 * 1000 ).build();
+        int timeout = new Long( TimeUnit.SECONDS.toMillis( 30 ) ).intValue(); // 30 sec
+        RequestConfig requestConfig =
+                        RequestConfig.custom().setConnectTimeout( timeout ).setSocketTimeout( timeout ).build();
         HttpClient httpClient = HttpClientBuilder.create().setDefaultRequestConfig( requestConfig ).build();
         return httpClient;
     }
