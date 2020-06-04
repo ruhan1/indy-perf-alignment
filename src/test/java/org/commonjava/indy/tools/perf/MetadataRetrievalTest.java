@@ -16,19 +16,18 @@
 package org.commonjava.indy.tools.perf;
 
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
-import org.apache.http.client.methods.CloseableHttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.plexus.util.IOUtil;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Arrays;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -36,6 +35,7 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static java.lang.Integer.min;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 public class MetadataRetrievalTest
@@ -50,15 +50,18 @@ public class MetadataRetrievalTest
         String indyUrl = System.getProperty( "indyUrl", INDY_URL ); // -DindyUrl
         System.out.println( "Use indyUrl: " + indyUrl );
 
-        String artifactsFile =
-                        System.getProperty( "artifactsFile", "artifacts" ); // e.g., -DartifactsFile=artifacts-all
-        System.out.println( "Use artifactsFile: " + artifactsFile );
+        int artifactsCount =
+                        Integer.parseInt( System.getProperty( "artifactsCount", "10" ) ); // e.g., -DartifactsCount=20
+        System.out.println( "Use artifactsCount: " + artifactsCount );
 
-        Set<String> artifacts;
-        try (InputStream in = getClass().getClassLoader().getResourceAsStream( artifactsFile ))
+        Set<String> artifacts = new HashSet<>();
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream( "artifacts" ))
         {
             String[] lines = IOUtil.toString( in ).split( "\n" );
-            artifacts = new HashSet<>( Arrays.asList( lines ) );
+            for ( int i = 0; i < min( artifactsCount, lines.length ); i++ )
+            {
+                artifacts.add( lines[i] );
+            }
         }
         catch ( IOException e )
         {
@@ -69,7 +72,7 @@ public class MetadataRetrievalTest
         Set<String> metadataPaths =
                         artifacts.stream().map( artifact -> getMetadataPath( artifact ) ).collect( Collectors.toSet() );
 
-        CloseableHttpClient client = HttpClients.createDefault();
+        HttpClient client = getHttpClient();
 
         long begin = System.currentTimeMillis();
         System.out.println( "Starts: " + new Date( begin ) );
@@ -86,7 +89,14 @@ public class MetadataRetrievalTest
 
     }
 
-    private String entityToString( CloseableHttpResponse response ) throws IOException
+    private HttpClient getHttpClient()
+    {
+        RequestConfig requestConfig = RequestConfig.custom().setConnectTimeout( 30 * 1000 ).build();
+        HttpClient httpClient = HttpClientBuilder.create().setDefaultRequestConfig( requestConfig ).build();
+        return httpClient;
+    }
+
+    private String entityToString( HttpResponse response ) throws IOException
     {
         HttpEntity entity = response.getEntity();
         if ( entity != null )
@@ -96,18 +106,22 @@ public class MetadataRetrievalTest
         return null;
     }
 
-    private String getMetadata( String path, CloseableHttpClient client )
+    private String getMetadata( String path, HttpClient client )
     {
         String ret;
         HttpGet request = new HttpGet( INDY_URL + "/" + path );
         try
         {
-            CloseableHttpResponse response = client.execute( request );
+            HttpResponse response = client.execute( request );
             StatusLine sl = response.getStatusLine();
             if ( sl.getStatusCode() == 200 )
             {
                 String content = entityToString( response );
                 System.out.println( "Got metadata: " + path );
+            }
+            else
+            {
+                System.out.println( "Failed: " + path );
             }
             ret = sl.toString();
         }
