@@ -21,8 +21,8 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh "echo ${env.indyUrl}"
-                sh 'mvn clean test -DindyUrl=${env.indyUrl} -DartifactsFile=${env.artifactsFile}'
+                //sh "echo ${env.indyUrl}"
+                sh "mvn clean test -DindyUrl=${env.indyUrl} -DartifactsFile=${env.artifactsFile}"
             }
         }
     }
