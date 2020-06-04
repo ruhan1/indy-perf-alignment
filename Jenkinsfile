@@ -1,6 +1,8 @@
 pipeline {
     agent { label 'maven' }
     stages {
+        def indyUrl = ''
+        def artifactsFile = ''
         stage('Prepare') {
             steps {
                 sh 'printenv'
@@ -16,8 +18,8 @@ pipeline {
                             string(name: 'artifactsFile', defaultValue: 'artifacts', description: 'artifacts (trial) or artifacts-all (281 files)'),
                         ]
                     )
-                    def indyUrl = userInput.indyUrl
-                    def artifactsFile = userInput.artifactsFile
+                    indyUrl = userInput.indyUrl
+                    artifactsFile = userInput.artifactsFile
                 }
             }
         }
