@@ -1,6 +1,3 @@
-def indyUrl = ''
-def artifactsFile = ''
-
 pipeline {
     agent { label 'maven' }
     stages {
@@ -17,14 +14,15 @@ pipeline {
                         string(name: 'indyUrl', defaultValue: 'http://indy-master-devel.psi.redhat.com/api/content/maven/group/DA-temporary-builds', description: 'Indy group URL to test'),
                         string(name: 'artifactsFile', defaultValue: 'artifacts', description: 'artifacts (trial) or artifacts-all (281 files)')
                     ]
-                    indyUrl = userInput.indyUrl
-                    artifactsFile = userInput.artifactsFile
+                    env.indyUrl = userInput.indyUrl
+                    env.artifactsFile = userInput.artifactsFile
                 }
             }
         }
         stage('Build') {
             steps {
-                sh 'mvn clean test -DindyUrl=${indyUrl} -DartifactsFile=${artifactsFile}'
+                sh "echo ${env.indyUrl}"
+                sh 'mvn clean test -DindyUrl=${env.indyUrl} -DartifactsFile=${env.artifactsFile}'
             }
         }
     }
