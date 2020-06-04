@@ -77,7 +77,7 @@ public class MetadataRetrievalTest
         long begin = System.currentTimeMillis();
         System.out.println( "Starts: " + new Date( begin ) );
         Set<CompletableFuture<String>> futures = new HashSet<>();
-        metadataPaths.forEach( path -> futures.add( supplyAsync( () -> getMetadata( path, client ) ) ) );
+        metadataPaths.forEach( path -> futures.add( supplyAsync( () -> getMetadata( indyUrl, path, client ) ) ) );
 
         List<String> list = futures.stream().map( f -> f.join() ).collect( Collectors.toList() );
 
@@ -106,10 +106,10 @@ public class MetadataRetrievalTest
         return null;
     }
 
-    private String getMetadata( String path, HttpClient client )
+    private String getMetadata( String indyUrl, String path, HttpClient client )
     {
         String ret;
-        HttpGet request = new HttpGet( INDY_URL + "/" + path );
+        HttpGet request = new HttpGet( indyUrl + "/" + path );
         try
         {
             HttpResponse response = client.execute( request );

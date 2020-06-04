@@ -22,7 +22,7 @@ pipeline {
         stage('Build') {
             steps {
                 //sh "echo ${env.indyUrl}"
-                sh "mvn clean test -DindyUrl=${env.indyUrl} -DartifactsFile=${env.artifactsCount}"
+                sh "mvn clean test -DindyUrl=${env.indyUrl} -DartifactsCount=${env.artifactsCount}"
             }
         }
     }
