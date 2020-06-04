@@ -16,8 +16,8 @@ pipeline {
                             string(name: 'artifactsFile', defaultValue: 'artifacts', description: 'artifacts (trial) or artifacts-all (281 files)'),
                         ]
                     )
-                    indyUrl = userInput.indyUrl
-                    artifactsFile = userInput.artifactsFile
+                    def indyUrl = userInput.indyUrl
+                    def artifactsFile = userInput.artifactsFile
                 }
             }
         }
