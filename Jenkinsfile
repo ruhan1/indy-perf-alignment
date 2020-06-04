@@ -1,8 +1,9 @@
+def indyUrl = ''
+def artifactsFile = ''
+
 pipeline {
     agent { label 'maven' }
     stages {
-        def indyUrl = ''
-        def artifactsFile = ''
         stage('Prepare') {
             steps {
                 sh 'printenv'
