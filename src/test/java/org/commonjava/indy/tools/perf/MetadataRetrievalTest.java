@@ -21,7 +21,12 @@ import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.config.SocketConfig;
+import org.apache.http.conn.ClientConnectionManager;
+import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.impl.client.HttpClients;
+import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
 import org.codehaus.plexus.util.IOUtil;
 import org.junit.Test;
@@ -42,6 +47,8 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 public class MetadataRetrievalTest
 
 {
+    private static final int timeout = new Long( TimeUnit.SECONDS.toMillis( 60 ) ).intValue(); // 60 sec
+
     private static final String INDY_URL =
                     "http://indy-admin-stage.psi.redhat.com/api/content/maven/group/DA-temporary-builds";
 
@@ -80,6 +87,7 @@ public class MetadataRetrievalTest
         Set<CompletableFuture<String>> futures = new HashSet<>();
         metadataPaths.forEach( path -> futures.add( supplyAsync( () -> getMetadata( indyUrl, path, client ) ) ) );
 
+        System.out.println("Futures: " + futures.size());
         List<String> list = futures.stream().map( f -> f.join() ).collect( Collectors.toList() );
 
         long end = System.currentTimeMillis();
@@ -90,12 +98,24 @@ public class MetadataRetrievalTest
 
     }
 
+/*
     private HttpClient getHttpClient()
     {
-        int timeout = new Long( TimeUnit.SECONDS.toMillis( 30 ) ).intValue(); // 30 sec
+        int timeout = new Long( TimeUnit.SECONDS.toMillis( 60 ) ).intValue(); // 60 sec
         RequestConfig requestConfig =
                         RequestConfig.custom().setConnectTimeout( timeout ).setSocketTimeout( timeout ).build();
         HttpClient httpClient = HttpClientBuilder.create().setDefaultRequestConfig( requestConfig ).build();
+        return httpClient;
+    }
+*/
+
+    private HttpClient getHttpClient()
+    {
+        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        connManager.setMaxTotal( 5 );
+        connManager.setDefaultMaxPerRoute( 5 );
+        connManager.setDefaultSocketConfig( SocketConfig.custom().setSoTimeout( timeout ).build() );
+        CloseableHttpClient httpClient = HttpClients.custom().setConnectionManager( connManager ).build();
         return httpClient;
     }
 
@@ -115,23 +135,29 @@ public class MetadataRetrievalTest
         HttpGet request = new HttpGet( indyUrl + "/" + path );
         try
         {
+            System.out.println( "Get metadata: " + path );
             HttpResponse response = client.execute( request );
             StatusLine sl = response.getStatusLine();
             if ( sl.getStatusCode() == 200 )
             {
                 String content = entityToString( response );
-                System.out.println( "Got metadata: " + path );
+                System.out.println( "Got: " + path );
             }
             else
             {
                 System.out.println( "Failed: " + path );
             }
+
             ret = sl.toString();
         }
         catch ( final IOException e )
         {
             e.printStackTrace();
             ret = e.getMessage();
+        }
+        finally
+        {
+            request.releaseConnection();
         }
         return path + " => " + ret;
     }
