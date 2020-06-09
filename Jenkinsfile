@@ -11,7 +11,7 @@ pipeline {
                 script {
                     def userInput = input message: "Please enter a test suite to run:",
                     parameters:[
-                        string(name: 'indyUrl', defaultValue: 'http://indy-master-devel.psi.redhat.com/api/content/maven/group/DA-temporary-builds', description: 'Indy group URL to test'),
+                        string(name: 'indyUrl', defaultValue: 'http://indy-perf-nos-automation.cloud.paas.psi.redhat.com/api/content/maven/group/DA-temporary-builds', description: 'Indy group URL to test'),
                         string(name: 'artifactsCount', defaultValue: '10', description: 'artifacts count (281 in total)')
                     ]
                     env.indyUrl = userInput.indyUrl
