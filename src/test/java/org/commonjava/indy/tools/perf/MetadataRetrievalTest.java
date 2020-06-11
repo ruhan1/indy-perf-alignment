@@ -47,7 +47,7 @@ import static java.util.concurrent.CompletableFuture.supplyAsync;
 public class MetadataRetrievalTest
 
 {
-    private static final int timeout = new Long( TimeUnit.SECONDS.toMillis( 60 ) ).intValue(); // 60 sec
+    private static final int timeout = new Long( TimeUnit.SECONDS.toMillis( 120 ) ).intValue();
 
     private static final String INDY_URL =
                     "http://indy-admin-stage.psi.redhat.com/api/content/maven/group/DA-temporary-builds";
