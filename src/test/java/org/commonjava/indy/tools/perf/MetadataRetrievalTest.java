@@ -137,7 +137,6 @@ public class MetadataRetrievalTest
         HttpGet request = new HttpGet( indyUrl + "/" + path );
         try
         {
-            System.out.println( "Get metadata: " + path );
             HttpResponse response = client.execute( request );
             StatusLine sl = response.getStatusLine();
             if ( sl.getStatusCode() == 200 )
@@ -147,7 +146,7 @@ public class MetadataRetrievalTest
             }
             else
             {
-                System.out.println( "Failed: " + path );
+                System.out.println( "Failed: " + path + ", " + sl.toString());
             }
 
             ret = sl.toString();
