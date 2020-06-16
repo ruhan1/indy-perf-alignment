@@ -42,6 +42,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static java.lang.Integer.min;
+import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
 
 public class MetadataRetrievalTest
@@ -82,7 +83,7 @@ public class MetadataRetrievalTest
 
         HttpClient client = getHttpClient();
 
-        long begin = System.currentTimeMillis();
+        long begin = currentTimeMillis();
         System.out.println( "Starts: " + new Date( begin ) );
         Set<CompletableFuture<String>> futures = new HashSet<>();
         metadataPaths.forEach( path -> futures.add( supplyAsync( () -> getMetadata( indyUrl, path, client ) ) ) );
@@ -90,7 +91,7 @@ public class MetadataRetrievalTest
         System.out.println("Futures: " + futures.size());
         List<String> list = futures.stream().map( f -> f.join() ).collect( Collectors.toList() );
 
-        long end = System.currentTimeMillis();
+        long end = currentTimeMillis();
         System.out.println( "\nResult:" );
         list.forEach( s -> System.out.println( s ) );
         System.out.println( "\nEnds: " + new Date( end ) );
@@ -131,6 +132,7 @@ public class MetadataRetrievalTest
 
     private String getMetadata( String indyUrl, String path, HttpClient client )
     {
+        long begin = currentTimeMillis();
         String ret;
         HttpGet request = new HttpGet( indyUrl + "/" + path );
         try
@@ -159,7 +161,7 @@ public class MetadataRetrievalTest
         {
             request.releaseConnection();
         }
-        return path + " => " + ret;
+        return path + " => " + ret + " (" + ( currentTimeMillis() - begin ) + ")";
     }
 
     /**
