@@ -146,7 +146,7 @@ public class MetadataRetrievalTest
             }
             else
             {
-                System.out.println( "Failed: " + path + ", " + sl.toString());
+                System.out.println( "Failed: " + path );
             }
 
             ret = sl.toString();
