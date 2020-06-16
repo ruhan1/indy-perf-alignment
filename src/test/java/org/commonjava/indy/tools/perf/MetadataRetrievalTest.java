@@ -19,12 +19,9 @@ import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.StatusLine;
 import org.apache.http.client.HttpClient;
-import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.config.SocketConfig;
-import org.apache.http.conn.ClientConnectionManager;
 import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.util.EntityUtils;
@@ -44,6 +41,7 @@ import java.util.stream.Collectors;
 import static java.lang.Integer.min;
 import static java.lang.System.currentTimeMillis;
 import static java.util.concurrent.CompletableFuture.supplyAsync;
+import static org.codehaus.plexus.util.StringUtils.isNotBlank;
 
 public class MetadataRetrievalTest
 
@@ -59,27 +57,18 @@ public class MetadataRetrievalTest
         String indyUrl = System.getProperty( "indyUrl", INDY_URL ); // -DindyUrl
         System.out.println( "Use indyUrl: " + indyUrl );
 
+        String artifacts = System.getProperty( "artifacts", "artifacts" );
+        System.out.println( "Use artifacts: " + artifacts );
+
         int artifactsCount =
                         Integer.parseInt( System.getProperty( "artifactsCount", "10" ) ); // e.g., -DartifactsCount=20
         System.out.println( "Use artifactsCount: " + artifactsCount );
 
-        Set<String> artifacts = new HashSet<>();
-        try (InputStream in = getClass().getClassLoader().getResourceAsStream( "artifacts" ))
-        {
-            String[] lines = IOUtil.toString( in ).split( "\n" );
-            for ( int i = 0; i < min( artifactsCount, lines.length ); i++ )
-            {
-                artifacts.add( lines[i] );
-            }
-        }
-        catch ( IOException e )
-        {
-            e.printStackTrace();
-            return;
-        }
+        Set<String> artifactSet = getArtifacts( artifactsCount, artifacts );
 
-        Set<String> metadataPaths =
-                        artifacts.stream().map( artifact -> getMetadataPath( artifact ) ).collect( Collectors.toSet() );
+        Set<String> metadataPaths = artifactSet.stream()
+                                               .map( artifact -> getMetadataPath( artifact ) )
+                                               .collect( Collectors.toSet() );
 
         HttpClient client = getHttpClient();
 
@@ -88,7 +77,7 @@ public class MetadataRetrievalTest
         Set<CompletableFuture<String>> futures = new HashSet<>();
         metadataPaths.forEach( path -> futures.add( supplyAsync( () -> getMetadata( indyUrl, path, client ) ) ) );
 
-        System.out.println("Futures: " + futures.size());
+        System.out.println( "Futures: " + futures.size() );
         List<String> list = futures.stream().map( f -> f.join() ).collect( Collectors.toList() );
 
         long end = currentTimeMillis();
@@ -99,16 +88,28 @@ public class MetadataRetrievalTest
 
     }
 
-/*
-    private HttpClient getHttpClient()
+    private Set<String> getArtifacts( int artifactsCount, String resource ) throws IOException
     {
-        int timeout = new Long( TimeUnit.SECONDS.toMillis( 60 ) ).intValue(); // 60 sec
-        RequestConfig requestConfig =
-                        RequestConfig.custom().setConnectTimeout( timeout ).setSocketTimeout( timeout ).build();
-        HttpClient httpClient = HttpClientBuilder.create().setDefaultRequestConfig( requestConfig ).build();
-        return httpClient;
+        Set<String> artifacts = new HashSet<>();
+        try (InputStream in = getClass().getClassLoader().getResourceAsStream( resource ))
+        {
+            String[] lines = IOUtil.toString( in ).split( "\n" );
+            for ( int i = 0; i < min( artifactsCount, lines.length ); i++ )
+            {
+                String line = lines[i];
+                if ( isNotBlank( line ) && !line.startsWith( "#" ) )
+                {
+                    int index = line.indexOf( "=" );
+                    if ( index > 0 )
+                    {
+                        line = line.substring( 0, index );
+                    }
+                    artifacts.add( line );
+                }
+            }
+        }
+        return artifacts;
     }
-*/
 
     private HttpClient getHttpClient()
     {
