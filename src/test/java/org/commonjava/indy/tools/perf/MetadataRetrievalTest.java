@@ -167,11 +167,14 @@ public class MetadataRetrievalTest
     /**
      * Get maven-metadata.xml path of given artifact.
      * e.g., org.keycloak:keycloak-server-spi:2.4.0.Final -> org/keycloak/keycloak-server-spi/maven-metadata.xml
+     * org.apache.geronimo.specs:geronimo-j2ee-connector_1.5_spec:2.0.0 -> org/apache/geronimo/specs/geronimo-j2ee-connector_1.5_spec/maven-metadata.xml
      */
     private String getMetadataPath( String artifact )
     {
-        return artifact.substring( 0, artifact.lastIndexOf( ":" ) ).replaceAll( "(\\.|:)", "/" )
-                        + "/maven-metadata.xml";
+        String[] toks = artifact.split( ":" );
+        String groupId = toks[0];
+        String artifactId = toks[1];
+        return groupId.replaceAll( "\\.", "/" ) + "/" + artifactId + "/maven-metadata.xml";
     }
 
 }
