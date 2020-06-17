@@ -158,7 +158,7 @@ public class MetadataRetrievalTest
         }
 
         return Arrays.stream( artifactsLine.split( "," ) )
-                     .map( s -> s.substring( 0, s.indexOf( "=" ) ) )
+                     .map( s -> s.substring( 0, s.indexOf( "=" ) ).trim() )
                      .collect( Collectors.toSet() );
     }
 
