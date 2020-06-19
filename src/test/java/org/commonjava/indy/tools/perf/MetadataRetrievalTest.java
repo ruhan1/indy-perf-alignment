@@ -35,6 +35,7 @@ import static org.commonjava.indy.tools.perf.Utils.getArtifacts;
 import static org.commonjava.indy.tools.perf.Utils.getHttpClient;
 import static org.commonjava.indy.tools.perf.Utils.getMetadataPath;
 import static org.commonjava.indy.tools.perf.Utils.getMetadata;
+import static org.junit.Assert.assertTrue;
 
 public class MetadataRetrievalTest
 
@@ -65,16 +66,31 @@ public class MetadataRetrievalTest
         int limit = Integer.parseInt( System.getProperty( "limit", "10" ) ); // e.g., -Dlimit=20
         System.out.println( "Use limit: " + limit );
 */
-
+        boolean success = true;
+        List<String> ret = new ArrayList<>();
         for ( String artifact : artifacts )
         {
-            run( artifact );
+            if ( run( artifact ) )
+            {
+                ret.add( "O " + artifact );
+            }
+            else
+            {
+                ret.add( "X " + artifact );
+                success = false;
+            }
         }
+        System.out.println( "\n------ Bottom line ------\n" );
+        for ( String s : ret )
+        {
+            System.out.println( s );
+        }
+        assertTrue( success );
     }
 
-    private void run( String artifact ) throws IOException
+    private boolean run( String artifact ) throws IOException
     {
-        System.out.println( "\n Run " + artifact );
+        System.out.println( "\n\n Run " + artifact );
 
         Set<String> artifactSet = getArtifacts( limit, artifact, client );
         System.out.println( "Get artifacts, size: " + artifactSet.size() );
@@ -82,12 +98,12 @@ public class MetadataRetrievalTest
         Set<String> metadataPaths = artifactSet.stream().map( s -> getMetadataPath( s ) ).collect( Collectors.toSet() );
 
         long begin = currentTimeMillis();
-        System.out.println( "Starts: " + new Date( begin ) );
+        //System.out.println( "Starts: " + new Date( begin ) );
         List<String> list = retrieveAll( metadataPaths );
         long end = currentTimeMillis();
         System.out.println( "\nResult:" );
         list.forEach( s -> System.out.println( s ) );
-        System.out.println( "\nEnds: " + new Date( end ) );
+        //System.out.println( "\nEnds: " + new Date( end ) );
         System.out.println( "\nElapse(s): " + ( end - begin ) / 1000 );
 
         // Retry failed
@@ -102,6 +118,9 @@ public class MetadataRetrievalTest
             System.out.println( "\nResult:" );
             list.forEach( s -> System.out.println( s ) );
         }
+
+        return failedPaths.isEmpty()
+                        || failedPaths.size() == list.size(); // consider pass if no failed, or failed on same paths
     }
 
     // Get artifacts from 1. built-in file, 2. build id, 3. full url. Or a group of them separated by comma.
