@@ -4,7 +4,6 @@ pipeline {
         stage('Prepare') {
             agent none
             steps {
-                sh 'printenv'
                 script {
                     def userInput = input message: "Please enter a test suite to run:",
                     parameters:[
