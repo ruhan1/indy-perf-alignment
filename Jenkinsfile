@@ -2,6 +2,7 @@ pipeline {
     agent none
     stages {
         stage('Prepare') {
+            agent none
             steps {
                 sh 'printenv'
                 script {
