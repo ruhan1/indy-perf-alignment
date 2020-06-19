@@ -12,18 +12,16 @@ pipeline {
                     def userInput = input message: "Please enter a test suite to run:",
                     parameters:[
                         string(name: 'indyUrl', defaultValue: 'http://indy-perf-nos-automation.cloud.paas.psi.redhat.com/api/content/maven/group/DA-temporary-builds', description: 'Indy group URL to test'),
-                        string(name: 'artifacts', defaultValue: 'camel', description: 'artifacts(275), camel(634), etc. Or you can specify a build id or full repour log url to fetch artifacts, e.g., 53917, http://orch.psi.redhat.com/pnc-rest/rest/build-records/53917/repour-log.'),
-                        string(name: 'limit', defaultValue: '10', description: 'artifacts limit')
+                        string(name: 'artifacts', defaultValue: 'keycloak', description: 'keycloak(292), camel(634), etc. Or you can specify a build id (or ids separated by ,) or a full repour log url to fetch artifacts, e.g., 53917, http://orch.psi.redhat.com/pnc-rest/rest/build-records/53917/repour-log.')
                     ]
                     env.indyUrl = userInput.indyUrl
                     env.artifacts = userInput.artifacts
-                    env.limit = userInput.limit
                 }
             }
         }
         stage('Build') {
             steps {
-                sh "mvn clean test -DindyUrl=${env.indyUrl} -Dartifacts=${env.artifacts} -Dlimit=${env.limit}"
+                sh "mvn clean test -DindyUrl=${env.indyUrl} -Dartifacts=${env.artifacts}"
             }
         }
     }

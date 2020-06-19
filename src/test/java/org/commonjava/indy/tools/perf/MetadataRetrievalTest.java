@@ -16,8 +16,11 @@
 package org.commonjava.indy.tools.perf;
 
 import org.apache.http.client.HttpClient;
+import org.junit.Before;
 import org.junit.Test;
 
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
@@ -36,27 +39,47 @@ import static org.commonjava.indy.tools.perf.Utils.getMetadata;
 public class MetadataRetrievalTest
 
 {
-    private static final int so_timeout = new Long( TimeUnit.SECONDS.toMillis( 300 ) ).intValue();
+    private final int so_timeout = new Long( TimeUnit.SECONDS.toMillis( 300 ) ).intValue();
+
+    private final int limit = Integer.MAX_VALUE;
+
+    private String indyUrl;
+
+    private HttpClient client;
+
+    @Before
+    public void prepare()
+    {
+        indyUrl = System.getProperty( "indyUrl" ); // -DindyUrl
+        client = getHttpClient( so_timeout );
+    }
 
     @Test
     public void test() throws Exception
     {
-        String indyUrl = System.getProperty( "indyUrl" ); // -DindyUrl
         System.out.println( "Use indyUrl: " + indyUrl );
 
-        String artifacts = getArtifactsBy( System.getProperty( "artifacts" ) );
+        List<String> artifacts = getArtifactsBy( System.getProperty( "artifacts" ) );
 
+/*
         int limit = Integer.parseInt( System.getProperty( "limit", "10" ) ); // e.g., -Dlimit=20
         System.out.println( "Use limit: " + limit );
+*/
 
-        HttpClient client = getHttpClient( so_timeout );
+        for ( String artifact : artifacts )
+        {
+            run( artifact );
+        }
+    }
 
-        Set<String> artifactSet = getArtifacts( limit, artifacts, client );
+    private void run( String artifact ) throws IOException
+    {
+        System.out.println( "\n Run " + artifact );
+
+        Set<String> artifactSet = getArtifacts( limit, artifact, client );
         System.out.println( "Get artifacts, size: " + artifactSet.size() );
 
-        Set<String> metadataPaths = artifactSet.stream()
-                                               .map( artifact -> getMetadataPath( artifact ) )
-                                               .collect( Collectors.toSet() );
+        Set<String> metadataPaths = artifactSet.stream().map( s -> getMetadataPath( s ) ).collect( Collectors.toSet() );
 
         long begin = currentTimeMillis();
         System.out.println( "Starts: " + new Date( begin ) );
@@ -81,21 +104,27 @@ public class MetadataRetrievalTest
         }
     }
 
-    // Get artifacts from 1. built-in file, 2. build id, 3. full url
-    private String getArtifactsBy( String artifacts )
+    // Get artifacts from 1. built-in file, 2. build id, 3. full url. Or a group of them separated by comma.
+    private List<String> getArtifactsBy( String artifacts )
     {
-        try
+        List<String> ret = new ArrayList<>();
+        String[] toks = artifacts.split( "," );
+        for ( String s : toks )
         {
-            int buildId = Integer.parseInt( artifacts );
-            artifacts = String.format( "http://orch.psi.redhat.com/pnc-rest/rest/build-records/%s/repour-log",
-                                       buildId );
+            s = s.trim();
+            try
+            {
+                int buildId = Integer.parseInt( s );
+                s = String.format( "http://orch.psi.redhat.com/pnc-rest/rest/build-records/%s/repour-log", buildId );
+            }
+            catch ( NumberFormatException ex )
+            {
+                // not build id
+            }
+            ret.add( s );
         }
-        catch ( NumberFormatException ex )
-        {
-            // not build id
-        }
-        System.out.println( "Use artifacts: " + artifacts );
-        return artifacts;
+        System.out.println( "Use artifacts: " + ret );
+        return ret;
     }
 
     private List<String> retrieveAll( Set<String> metadataPaths, String indyUrl, HttpClient client )
