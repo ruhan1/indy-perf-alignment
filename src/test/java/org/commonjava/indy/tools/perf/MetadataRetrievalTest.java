@@ -83,7 +83,7 @@ public class MetadataRetrievalTest
 
         long begin = currentTimeMillis();
         System.out.println( "Starts: " + new Date( begin ) );
-        List<String> list = retrieveAll( metadataPaths, indyUrl, client );
+        List<String> list = retrieveAll( metadataPaths );
         long end = currentTimeMillis();
         System.out.println( "\nResult:" );
         list.forEach( s -> System.out.println( s ) );
@@ -98,7 +98,7 @@ public class MetadataRetrievalTest
         if ( !failedPaths.isEmpty() )
         {
             System.out.println( "\nRetry failed (" + failedPaths.size() + "):" );
-            list = retrieveAll( failedPaths, indyUrl, client );
+            list = retrieveAll( failedPaths );
             System.out.println( "\nResult:" );
             list.forEach( s -> System.out.println( s ) );
         }
@@ -127,7 +127,7 @@ public class MetadataRetrievalTest
         return ret;
     }
 
-    private List<String> retrieveAll( Set<String> metadataPaths, String indyUrl, HttpClient client )
+    private List<String> retrieveAll( Set<String> metadataPaths )
     {
         Set<CompletableFuture<String>> futures = new HashSet<>();
         metadataPaths.forEach( path -> futures.add( supplyAsync( () -> getMetadata( indyUrl, path, client ) ) ) );
