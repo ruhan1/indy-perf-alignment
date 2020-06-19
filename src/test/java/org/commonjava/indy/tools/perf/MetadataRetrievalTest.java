@@ -21,7 +21,6 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -62,21 +61,17 @@ public class MetadataRetrievalTest
 
         List<String> artifacts = getArtifactsBy( System.getProperty( "artifacts" ) );
 
-/*
-        int limit = Integer.parseInt( System.getProperty( "limit", "10" ) ); // e.g., -Dlimit=20
-        System.out.println( "Use limit: " + limit );
-*/
         boolean success = true;
         List<String> ret = new ArrayList<>();
         for ( String artifact : artifacts )
         {
             if ( run( artifact ) )
             {
-                ret.add( "O " + artifact );
+                ret.add( "OK " + artifact );
             }
             else
             {
-                ret.add( "X " + artifact );
+                ret.add( "FAILED " + artifact );
                 success = false;
             }
         }
@@ -88,6 +83,7 @@ public class MetadataRetrievalTest
         assertTrue( success );
     }
 
+    // consider pass if no one failed, or failed on same paths after retry
     private boolean run( String artifact ) throws IOException
     {
         System.out.println( "\n\n Run " + artifact );
@@ -119,8 +115,7 @@ public class MetadataRetrievalTest
             list.forEach( s -> System.out.println( s ) );
         }
 
-        return failedPaths.isEmpty()
-                        || failedPaths.size() == list.size(); // consider pass if no failed, or failed on same paths
+        return failedPaths.isEmpty() || failedPaths.size() == list.size();
     }
 
     // Get artifacts from 1. built-in file, 2. build id, 3. full url. Or a group of them separated by comma.

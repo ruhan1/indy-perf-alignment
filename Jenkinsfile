@@ -1,5 +1,4 @@
 pipeline {
-    agent { label 'maven' }
     stages {
         stage('Prepare') {
             steps {
@@ -20,6 +19,7 @@ pipeline {
             }
         }
         stage('Build') {
+            agent { label 'maven' }
             steps {
                 sh "mvn clean test -DindyUrl=${env.indyUrl} -Dartifacts=${env.artifacts}"
             }
