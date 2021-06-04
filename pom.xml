@@ -12,7 +12,7 @@
 
     <properties>
         <javaVersion>1.8</javaVersion>
-        <httpclientVersion>4.5.9</httpclientVersion>
+        <httpclientVersion>4.5.13</httpclientVersion>
     </properties>
 
     <dependencies>
